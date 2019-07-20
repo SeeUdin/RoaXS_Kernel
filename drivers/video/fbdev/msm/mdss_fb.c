@@ -51,6 +51,19 @@
 #include <linux/devfreq_boost.h>
 #include <sync.h>
 #include <sw_sync.h>
+#ifdef CONFIG_MACH_MI
+#include <linux/interrupt.h>
+#endif
+#ifdef CONFIG_MACH_XIAOMI_SDM660
+#include <linux/wakelock.h>
+#endif
+
+#ifdef CONFIG_MACH_XIAOMI_CLOVER
+#include <linux/mdss_io_util.h>
+#include <linux/wakelock.h>
+#include <linux/devfreq_boost.h>
+#include <sync.h>
+#include <sw_sync.h>
 
 #include "mdss_dsi.h"
 #include "mdss_fb.h"
