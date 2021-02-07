@@ -66,6 +66,9 @@ extern bool synaptics_gesture_func_on;
 bool ESD_TE_status = false;
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+static unsigned int cur_refresh_rate = 60;
+module_param(cur_refresh_rate, uint, 0444);
+
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	if (ctrl->pwm_pmi)
@@ -2783,6 +2786,7 @@ static int mdss_dsi_panel_timing_from_dt(struct device_node *np,
 
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-panel-framerate", &tmp);
 	pt->timing.frame_rate = !rc ? tmp : DEFAULT_FRAME_RATE;
+	WRITE_ONCE(pt->timing.frame_rate, cur_refresh_rate);
 	rc = of_property_read_u64(np, "qcom,mdss-dsi-panel-clockrate", &tmp64);
 	if (rc == -EOVERFLOW) {
 		tmp64 = 0;
