@@ -19,8 +19,8 @@ make_build(){
 				CROSS_COMPILE=aarch64-linux-gnu- \
 				CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 	else
-		export CROSS_COMPILE=$(pwd)/gcc/bin/aarch64-elf- \
-                export CROSS_COMPILE_ARM32=$(pwd)/gcc+/bin/arm-linux-androideabi-
+		export CROSS_COMPILE=$(pwd)/gcc64/bin/aarch64-elf-
+		export CROSS_COMPILE_ARM32=$(pwd)/gcc32/bin/arm-eabi-
 		make O=out ARCH=arm64 $1
 		make -j$(nproc --all) O=out ARCH=arm64
 	fi
@@ -41,7 +41,7 @@ send_msg(){
 send_file(){
 	print "Sending file..." green
 	curl -F chat_id="${chat_id}" \
-		-F caption="✅ Build succesfully! | DEVICE: ${type} | SHA1 : $(sha1sum ${file} | awk '{ print $1 }')" \
+		-F caption="Build Berhasil! | Rocket ${type} 🚀🚀" \
 		-F document=@"${1}" \
 		 https://api.telegram.org/bot"${bot_token}"/sendDocument
 }
@@ -56,7 +56,7 @@ mkzip(){
 		cd ..
 		send_file $1
 	else
-		send_msg "Build error !"
+		send_msg "Build Gagal!, Harap Cek lagi"
 		print "Build error !" red
 		exit 1
 	fi
@@ -79,12 +79,12 @@ gen_toolchain(){
 	print "Cloning toolchain files..." green
 	if [ $TOOLCHAIN == "clang" ]
 	then
-		git clone --depth=1 https://github.com/Haseo97/Avalon-Clang-11.0.5 clang
+		git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
 	else
-		git clone --depth=1 https://github.com/GrowtopiaJaw/aarch64-linux-android-4.9 gcc -b linaro
-                git clone --depth=1 https://github.com/theradcolor/arm-linux-androideabi-4.9 gcc+
+		git clone --depth=1 https://github.com/mvaisakh/gcc-arm64 -b gcc-master gcc
+		git clone --depth=1 https://github.com/mvaisakh/gcc-arm -b gcc-master gcc+
 	fi
-	git clone --depth=1 https://github.com/ryuKizuha/zipper -b lithium anykernel
+		git clone --depth=1 https://github.com/SiAli07/AnyKernel3 -b master anykernel
 }
 
 build(){
@@ -95,9 +95,9 @@ build(){
 
 	if [ $2 == "-oldcam" ]
 	then
-		make_build "lavender-li-old_defconfig"
+		make_build "${1}-old_defconfig"
 	else
-		make_build "lavender-li-new_defconfig"
+		make_build "${1}-new_defconfig"
 	fi
 		mkzip "$KERNELNAME-$LOCALVERSION-${1}${2}${3}-$DATE.zip"
 }
