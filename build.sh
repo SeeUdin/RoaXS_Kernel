@@ -10,13 +10,13 @@ export KBUILD_BUILD_HOST=#FunProject
 
 export TOOLCHAIN=clang
 
-export DEVICES=lavender
+export DEVICES=lavender,whyred
 
 source helper
 
 gen_toolchain
 
-send_msg "Memulai Build..."
+send_msg "⏳ memulai membuild ${KERNELNAME} ${LOCALVERSION} HMP | DEVICES: lavender - whyred "
 
 START=$(date +"%s")
 
