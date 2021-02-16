@@ -147,7 +147,7 @@ struct cfq_queue {
 
 	/* io prio of this group */
 	unsigned short ioprio, org_ioprio;
-	unsigned short ioprio_class, org_ioprio_class;
+	unsigned short ioprio_class;
 
 	pid_t pid;
 
@@ -990,6 +990,15 @@ static inline u64 max_vdisktime(u64 min_vdisktime, u64 vdisktime)
 	return min_vdisktime;
 }
 
+static inline u64 min_vdisktime(u64 min_vdisktime, u64 vdisktime)
+{
+	s64 delta = (s64)(vdisktime - min_vdisktime);
+	if (delta < 0)
+		min_vdisktime = vdisktime;
+
+	return min_vdisktime;
+}
+
 static void update_min_vdisktime(struct cfq_rb_root *st)
 {
 	struct cfq_group *cfqg;
@@ -1677,20 +1686,14 @@ static void cfq_pd_offline(struct blkg_policy_data *pd)
 	int i;
 
 	for (i = 0; i < IOPRIO_BE_NR; i++) {
-		if (cfqg->async_cfqq[0][i]) {
+		if (cfqg->async_cfqq[0][i])
 			cfq_put_queue(cfqg->async_cfqq[0][i]);
-			cfqg->async_cfqq[0][i] = NULL;
-		}
-		if (cfqg->async_cfqq[1][i]) {
+		if (cfqg->async_cfqq[1][i])
 			cfq_put_queue(cfqg->async_cfqq[1][i]);
-			cfqg->async_cfqq[1][i] = NULL;
-		}
 	}
 
-	if (cfqg->async_idle_cfqq) {
+	if (cfqg->async_idle_cfqq)
 		cfq_put_queue(cfqg->async_idle_cfqq);
-		cfqg->async_idle_cfqq = NULL;
-	}
 
 	/*
 	 * @blkg is going offline and will be ignored by
@@ -2562,7 +2565,7 @@ static int cfq_merge(struct request_queue *q, struct request **req,
 	struct request *__rq;
 
 	__rq = cfq_find_rq_fmerge(cfqd, bio);
-	if (__rq && elv_bio_merge_ok(__rq, bio)) {
+	if (__rq && elv_rq_merge_ok(__rq, bio)) {
 		*req = __rq;
 		return ELEVATOR_FRONT_MERGE;
 	}
@@ -2619,8 +2622,8 @@ cfq_merged_requests(struct request_queue *q, struct request *rq,
 		cfq_del_cfqq_rr(cfqd, cfqq);
 }
 
-static int cfq_allow_bio_merge(struct request_queue *q, struct request *rq,
-			       struct bio *bio)
+static int cfq_allow_merge(struct request_queue *q, struct request *rq,
+			   struct bio *bio)
 {
 	struct cfq_data *cfqd = q->elevator->elevator_data;
 	struct cfq_io_cq *cic;
@@ -2642,12 +2645,6 @@ static int cfq_allow_bio_merge(struct request_queue *q, struct request *rq,
 
 	cfqq = cic_to_cfqq(cic, cfq_bio_sync(bio));
 	return cfqq == RQ_CFQQ(rq);
-}
-
-static int cfq_allow_rq_merge(struct request_queue *q, struct request *rq,
-			      struct request *next)
-{
-	return RQ_CFQQ(rq) == RQ_CFQQ(next);
 }
 
 static inline void cfq_del_timer(struct cfq_data *cfqd, struct cfq_queue *cfqq)
@@ -2775,11 +2772,9 @@ static struct cfq_queue *cfq_get_next_queue_forced(struct cfq_data *cfqd)
 	if (!cfqg)
 		return NULL;
 
-	for_each_cfqg_st(cfqg, i, j, st) {
-		cfqq = cfq_rb_first(st);
-		if (cfqq)
+	for_each_cfqg_st(cfqg, i, j, st)
+		if ((cfqq = cfq_rb_first(st)) != NULL)
 			return cfqq;
-	}
 	return NULL;
 }
 
@@ -2955,8 +2950,8 @@ static void cfq_arm_slice_timer(struct cfq_data *cfqd)
 
 	/*
 	 * SSD device without seek penalty, disable idling. But only do so
-	 * for devices that support queuing (and when group idle is 0),
-	 * otherwise we still have a problem with sync vs async workloads.
+	 * for devices that support queuing, otherwise we still have a problem
+	 * with sync vs async workloads.
 	 */
 	if (blk_queue_nonrot(cfqd->queue) && cfqd->hw_tag &&
 		!cfqd->cfq_group_idle)
@@ -3735,7 +3730,6 @@ static void cfq_init_prio_data(struct cfq_queue *cfqq, struct cfq_io_cq *cic)
 	 * elevate the priority of this queue
 	 */
 	cfqq->org_ioprio = cfqq->ioprio;
-	cfqq->org_ioprio_class = cfqq->ioprio_class;
 	cfq_clear_cfqq_prio_changed(cfqq);
 }
 
@@ -3883,8 +3877,6 @@ cfq_get_queue(struct cfq_data *cfqd, bool is_sync, struct cfq_io_cq *cic,
 		goto out;
 	}
 
-	/* cfq_init_cfqq() assumes cfqq->ioprio_class is initialized. */
-	cfqq->ioprio_class = IOPRIO_CLASS_NONE;
 	cfq_init_cfqq(cfqd, cfqq, current->pid, is_sync);
 	cfq_init_prio_data(cfqq, cic);
 	cfq_link_cfqq_cfqg(cfqq, cfqg);
@@ -4342,24 +4334,6 @@ static void cfq_completed_request(struct request_queue *q, struct request *rq)
 		cfq_schedule_dispatch(cfqd);
 }
 
-static void cfqq_boost_on_prio(struct cfq_queue *cfqq, int rw)
-{
-	/*
-	 * If REQ_PRIO is set, boost class and prio level, if it's below
-	 * BE/NORM. If prio is not set, restore the potentially boosted
-	 * class/prio level.
-	 */
-	if (!(rw & REQ_PRIO)) {
-		cfqq->ioprio_class = cfqq->org_ioprio_class;
-		cfqq->ioprio = cfqq->org_ioprio;
-	} else {
-		if (cfq_class_idle(cfqq))
-			cfqq->ioprio_class = IOPRIO_CLASS_BE;
-		if (cfqq->ioprio > IOPRIO_NORM)
-			cfqq->ioprio = IOPRIO_NORM;
-	}
-}
-
 static inline int __cfq_may_queue(struct cfq_queue *cfqq)
 {
 	if (cfq_cfqq_wait_request(cfqq) && !cfq_cfqq_must_alloc_slice(cfqq)) {
@@ -4390,7 +4364,6 @@ static int cfq_may_queue(struct request_queue *q, int rw)
 	cfqq = cic_to_cfqq(cic, rw_is_sync(rw));
 	if (cfqq) {
 		cfq_init_prio_data(cfqq, cic);
-		cfqq_boost_on_prio(cfqq, rw);
 
 		return __cfq_may_queue(cfqq);
 	}
@@ -4727,12 +4700,13 @@ cfq_var_show(unsigned int var, char *page)
 	return sprintf(page, "%u\n", var);
 }
 
-static void
-cfq_var_store(unsigned int *var, const char *page)
+static ssize_t
+cfq_var_store(unsigned int *var, const char *page, size_t count)
 {
 	char *p = (char *) page;
 
 	*var = simple_strtoul(p, &p, 10);
+	return count;
 }
 
 #define SHOW_FUNCTION(__FUNC, __VAR, __CONV)				\
@@ -4777,18 +4751,17 @@ USEC_SHOW_FUNCTION(cfq_target_latency_us_show, cfqd->cfq_target_latency);
 static ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)	\
 {									\
 	struct cfq_data *cfqd = e->elevator_data;			\
-	unsigned int __data, __min = (MIN), __max = (MAX);		\
-									\
-	cfq_var_store(&__data, (page));					\
-	if (__data < __min)						\
-		__data = __min;						\
-	else if (__data > __max)					\
-		__data = __max;						\
+	unsigned int __data;						\
+	int ret = cfq_var_store(&__data, (page), count);		\
+	if (__data < (MIN))						\
+		__data = (MIN);						\
+	else if (__data > (MAX))					\
+		__data = (MAX);						\
 	if (__CONV)							\
 		*(__PTR) = (u64)__data * NSEC_PER_MSEC;			\
 	else								\
 		*(__PTR) = __data;					\
-	return count;							\
+	return ret;							\
 }
 STORE_FUNCTION(cfq_quantum_store, &cfqd->cfq_quantum, 1, UINT_MAX, 0);
 STORE_FUNCTION(cfq_fifo_expire_sync_store, &cfqd->cfq_fifo_expire[1], 1,
@@ -4857,8 +4830,7 @@ static struct elevator_type iosched_cfq = {
 		.elevator_merge_fn = 		cfq_merge,
 		.elevator_merged_fn =		cfq_merged_request,
 		.elevator_merge_req_fn =	cfq_merged_requests,
-		.elevator_allow_bio_merge_fn =	cfq_allow_bio_merge,
-		.elevator_allow_rq_merge_fn =	cfq_allow_rq_merge,
+		.elevator_allow_merge_fn =	cfq_allow_merge,
 		.elevator_bio_merged_fn =	cfq_bio_merged,
 		.elevator_dispatch_fn =		cfq_dispatch_requests,
 		.elevator_add_req_fn =		cfq_insert_request,
