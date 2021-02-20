@@ -1309,6 +1309,7 @@ static int lmh_probe(struct platform_device *pdev)
 		goto probe_exit;
 	}
 	INIT_DEFERRABLE_WORK(&lmh_data->poll_work, lmh_poll);
+#endif
 
 	ret = lmh_sensor_init(pdev);
 	if (ret) {
@@ -1332,8 +1333,10 @@ static int lmh_probe(struct platform_device *pdev)
 	}
 	platform_set_drvdata(pdev, lmh_data);
 
+#ifndef CONFIG_LIMITS_LITE_HW_POLLING
 	return ret;
-	
+#endif
+
 probe_exit:
 	if (lmh_data->poll_wq)
 		destroy_workqueue(lmh_data->poll_wq);
