@@ -2,7 +2,7 @@
 
 export KERNELNAME=ROCKET-KERNEL
 
-export LOCALVERSION=-XR2.1
+export LOCALVERSION=-AO-XR2.2
 
 export KBUILD_BUILD_USER=Ali
 
@@ -10,7 +10,7 @@ export KBUILD_BUILD_HOST=#FunProject
 
 export TOOLCHAIN=clang
 
-export DEVICES=lavender,whyred
+export DEVICES=lavender
 
 source helper
 
