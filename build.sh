@@ -2,11 +2,11 @@
 
 export KERNELNAME=ROCKET-KERNEL
 
-export LOCALVERSION=-AO-XR2.2
+export LOCALVERSION=
 
-export KBUILD_BUILD_USER=Ali
+export KBUILD_BUILD_USER=AL1
 
-export KBUILD_BUILD_HOST=#FunProject
+export KBUILD_BUILD_HOST=#RocketProject
 
 export TOOLCHAIN=clang
 
@@ -16,7 +16,7 @@ source helper
 
 gen_toolchain
 
-send_msg "⏳ memulai membuild ${KERNELNAME} ${LOCALVERSION} HMP | DEVICES: lavender - whyred "
+send_msg "⏳ memulai membuild"
 
 START=$(date +"%s")
 
