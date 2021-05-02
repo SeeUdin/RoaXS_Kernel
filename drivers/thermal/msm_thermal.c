@@ -3259,20 +3259,6 @@ static __ref int do_hotplug(void *data)
 
 	return ret;
 }
-static void __ref do_core_control(int temp)
-{
-	return;
-}
-
-static __ref int do_hotplug(void *data)
-{
-	return 0;
-}
-
-static int __ref update_offline_cores(int val)
-{
-	return 0;
-}
 
 static int do_gfx_phase_cond(void)
 {
