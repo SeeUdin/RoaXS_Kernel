@@ -3030,7 +3030,6 @@ static void retry_hotplug(struct work_struct *work)
 	mutex_unlock(&core_control_mutex);
 }
 
-#ifdef CONFIG_SMP
 static void __ref do_core_control(int temp)
 {
 	int i = 0;
