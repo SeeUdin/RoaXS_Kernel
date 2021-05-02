@@ -3259,7 +3259,6 @@ static __ref int do_hotplug(void *data)
 
 	return ret;
 }
-#else
 static void __ref do_core_control(int temp)
 {
 	return;
