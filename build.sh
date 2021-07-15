@@ -2,7 +2,7 @@
 
 export KERNELNAME=ROCKET-KERNEL
 
-export LOCALVERSION=-VoC-XR3.7
+export LOCALVERSION=-XR3.7
 
 export KBUILD_BUILD_USER=AL1
 
@@ -16,7 +16,7 @@ source helper
 
 gen_toolchain
 
-send_msg "Memulai Menerbangkan Rocket"
+send_msg "🚀🚀Memulai Menerbangkan Rocket🚀🚀"
 
 START=$(date +"%s")
 
@@ -33,4 +33,4 @@ END=$(date +"%s")
 
 DIFF=$(( END - START ))
 
-send_msg "Menderat Dengan Selamat | $((DIFF / 60))Menit $((DIFF % 60))Detik | Pembaruan: $(git log --pretty=format:'%h : %s' -5)"
+send_msg "⚡Menderat Dengan Selamat | $((DIFF / 60))Menit $((DIFF % 60))Detik | Pembaruan: $(git log --pretty=format:'%h : %s' -5)⚡"
