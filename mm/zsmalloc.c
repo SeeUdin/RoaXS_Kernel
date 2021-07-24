@@ -2310,11 +2310,11 @@ static unsigned long __zs_compact(struct zs_pool *pool,
 			if (!migrate_zspage(pool, class, &cc))
 				break;
 
-			putback_zspage(class, dst_zspage);
+			putback_zspage(class, dst_page);
 		}
 
 		/* Stop if we couldn't find slot */
-		if (dst_zspage == NULL)
+		if (dst_page == NULL)
 			break;
 
 		putback_zspage(pool, class, dst_page);
@@ -2325,7 +2325,7 @@ static unsigned long __zs_compact(struct zs_pool *pool,
 		spin_lock(&class->lock);
 	}
 
-	if (src_zspage)
+	if (src_page)
 		putback_zspage(class, src_zspage);
 
 	spin_unlock(&class->lock);
