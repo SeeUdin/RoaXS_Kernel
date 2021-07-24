@@ -2556,16 +2556,8 @@ int mmc_set_uhs_voltage(struct mmc_host *host, u32 ocr)
 	 * voltage switch sequence.
 	 */
 	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err) {
-		if (err == -ETIMEDOUT) {
-			pr_debug("%s: voltage switching failed with err %d\n",
-				mmc_hostname(host), err);
-			err = -EAGAIN;
-			goto power_cycle;
-		} else {
-			return err;
-		}
-	}
+	if (err)
+		goto power_cycle;
 
 	if (!mmc_host_is_spi(host) && (cmd.resp[0] & R1_ERROR))
 		return -EIO;
