@@ -2293,7 +2293,7 @@ static unsigned long __zs_compact(struct zs_pool *pool,
 	unsigned long pages_freed = 0;
 
 	spin_lock(&class->lock);
-	while ((src_zspage = isolate_zspage(class, true))) {
+	while ((src_page = isolate_zspage(class, true))) {
 
 		if (!zs_can_compact(class))
 			break;
