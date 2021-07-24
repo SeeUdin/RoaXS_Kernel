@@ -2299,10 +2299,10 @@ static unsigned long __zs_compact(struct zs_pool *pool,
 			break;
 
 		cc.index = 0;
-		cc.s_page = get_first_page(src_zspage);
+		cc.s_page = get_first_page(src_page);
 
-		while ((dst_zspage = isolate_zspage(class, false))) {
-			cc.d_page = get_first_page(dst_zspage);
+		while ((dst_page = isolate_zspage(class, false))) {
+			cc.d_page = get_first_page(dst_page);
 			/*
 			 * If there is no more space in dst_page, resched
 			 * and see if anyone had allocated another zspage.
