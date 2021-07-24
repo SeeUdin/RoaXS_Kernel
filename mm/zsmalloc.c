@@ -2326,7 +2326,7 @@ static unsigned long __zs_compact(struct zs_pool *pool,
 	}
 
 	if (src_page)
-		putback_zspage(class, src_zspage);
+		putback_zspage(class, src_page);
 
 	spin_unlock(&class->lock);
 
