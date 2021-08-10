@@ -1,8 +1,8 @@
 #!/bin/bash
 
-export KERNELNAME=ROCKET-KERNEL
+export KERNELNAME=Roa-
 
-export LOCALVERSION=-RX1
+export LOCALVERSION=-ROC-XS1
 
 export KBUILD_BUILD_USER=AL1
 
